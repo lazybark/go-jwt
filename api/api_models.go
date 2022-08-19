@@ -1,8 +1,20 @@
 package api
 
+import "github.com/golang-jwt/jwt/v4"
+
 type ApiAnswer struct {
 	Success bool        `json:"success"`
 	Result  interface{} `json:"result"`
+}
+
+type JWTClaims struct {
+	Login     string `json:"login"`
+	Email     string `json:"email"`
+	Name      string `json:"name"`
+	LastName  string `json:"last_name"`
+	UsersPerm string `json:"users_permission"`
+	ServiceID int    `json:"service_id"`
+	jwt.RegisteredClaims
 }
 
 var (
@@ -29,4 +41,7 @@ var (
 
 	ErrorWrongCreds     = "wrong_credentials"
 	ErrorWrongCredsCode = 403
+
+	ErrorUnauthed     = "unathorized"
+	ErrorUnauthedCode = 401
 )

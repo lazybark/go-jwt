@@ -5,5 +5,6 @@ type Storage interface {
 	Init() error
 
 	UserAdd(User) (int, error)
-	UserGetData(string) (User, error)
+	UserGetData(string, int) (User, error)
+	UserUpdateActivity(int) error
 }

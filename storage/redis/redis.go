@@ -16,8 +16,8 @@ type Redis struct {
 }
 
 var keys = map[string]string{
-	"logins": "login-%s", //user-login
-	"users":  "user-%v",  //user-id
+	"logins": "login-%s-%v", //user-login-serviceID
+	"users":  "user-%v",     //user-id
 }
 
 func NewRedisStorage(RedisHost string, RedisPassword string, RedisTLS bool, DB int) (storage.Storage, error) {

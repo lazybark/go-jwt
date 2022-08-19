@@ -27,10 +27,13 @@ func (s SQLite) UserAdd(storage.User) (int, error) {
 	return 0, nil
 }
 
-func (s SQLite) UserGetData(login string) (storage.User, error) {
+func (s SQLite) UserGetData(login string, service int) (storage.User, error) {
 	return storage.User{}, nil
 }
 
+func (s SQLite) UserUpdateActivity(uid int) error {
+	return nil
+}
 func (s SQLite) Flush() error {
 	return nil
 }

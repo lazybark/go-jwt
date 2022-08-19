@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -13,14 +14,18 @@ import (
 )
 
 func (a *Api) GenerateHMACToken(u storage.User) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"foo": "bar",
-		"iss": storage.Unversal.String(),
-		"sub": u.ServiceId.String(),
-		"iat": jwt.NewNumericDate(time.Now()),
-		"nbf": jwt.NewNumericDate(time.Now()),
-		"exp": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-	})
+	claims := &JWTClaims{
+		Login:     u.Login,
+		ServiceID: int(u.ServiceId),
+		Name:      u.Name,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    storage.Unversal.String(),
+			Subject:   u.ServiceId.String(),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenString, err := token.SignedString([]byte(a.conf.Secret))
 
@@ -32,18 +37,27 @@ func (a *Api) ResponseUserLogin(req *http.Request, w http.ResponseWriter) {
 	//Check if user data fits our requirements
 	login := req.Form.Get("login")
 	pwd := req.Form.Get("pwd")
-	if login == "" || pwd == "" {
+	srv := req.Form.Get("service_id")
+	if login == "" || pwd == "" || srv == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf(ApiError, ErrorBadFormCode, ErrorBadForm)))
 		return
 	}
 
-	userData, err := a.db.UserGetData(login)
+	serviceId, err := strconv.Atoi(srv)
 	if err != nil {
-		fmt.Println(clf.Red(err))
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf(ApiError, ErrorBadFormCode, ErrorBadForm)))
+		return
+	}
+
+	userData, err := a.db.UserGetData(login, serviceId)
+	if err != nil {
 		if err == storage.ErrEntityNotExist {
 			w.Write([]byte(fmt.Sprintf(ApiError, ErrorNotExistCode, ErrorNotExist)))
+			return
 		}
+		fmt.Println(clf.Red(err))
 		w.Write([]byte(fmt.Sprintf(ApiError, ErrorInternalCode, ErrorInternal)))
 		return
 	}

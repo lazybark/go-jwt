@@ -22,8 +22,12 @@ type User struct {
 	Email        string    `json:"email"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+
 	//LastActivity sets time of last auth request on user's behalf
-	LastActivity    time.Time  `json:"last_activity"`
+	LastActivity time.Time `json:"last_activity"`
+
+	//PermissionUsers sets level of permissions to control users
+	//in the auth system
 	PermissionUsers Permission `json:"users_permission"`
 }
 
@@ -55,7 +59,7 @@ var (
 	UserSystem = User{
 		ServiceId:       Unversal,
 		Login:           "SYSTEM_USER",
-		PasswordHash:    "",
+		PasswordHash:    "retina-misc1-monstrous-23",
 		Name:            "SYSTEM_USER",
 		SecName:         "",
 		Email:           "",

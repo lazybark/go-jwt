@@ -19,7 +19,7 @@ func (r *Redis) GenerateUserId() int {
 
 func (r Redis) UserAdd(u storage.User) (int, error) {
 	//Check if such login exists
-	exists, err := r.CheckExistense(fmt.Sprintf(keys["logins"], u.Login))
+	exists, err := r.CheckExistense(fmt.Sprintf(keys["logins"], u.Login, int(u.ServiceId)))
 	if err != nil {
 		return 0, storage.ErrInternal
 	}
@@ -30,8 +30,10 @@ func (r Redis) UserAdd(u storage.User) (int, error) {
 	id := r.GenerateUserId()
 
 	//Add user data to user data list
+	u.ID = id
 	u.CreatedAt = time.Now()
 	u.UpdatedAt = time.Now()
+	u.LastActivity = time.Now()
 
 	pwdHashed, err := r.hashAndSaltPassword([]byte(u.PasswordHash))
 	if err != nil {
@@ -49,7 +51,7 @@ func (r Redis) UserAdd(u storage.User) (int, error) {
 		return 0, storage.ErrInternal
 	}
 	//Add user login to login list
-	err = r.db.Set(fmt.Sprintf(keys["logins"], u.Login), id, 0).Err()
+	err = r.db.Set(fmt.Sprintf(keys["logins"], u.Login, int(u.ServiceId)), id, 0).Err()
 	if err != nil {
 		fmt.Println(clf.Red("ERROR SETTING USER LOGIN RECORD. MAIN RECORD WILL BE DELETED for ", id))
 		//Remove user data from data list
@@ -63,11 +65,11 @@ func (r Redis) UserAdd(u storage.User) (int, error) {
 	return id, nil
 }
 
-func (r Redis) UserGetData(login string) (storage.User, error) {
+func (r Redis) UserGetData(login string, service int) (storage.User, error) {
 	//Check if user exists (has login & id associated with it)
 	u := storage.User{}
 	uid := 0
-	lBytes, err := r.GetKey(fmt.Sprintf(keys["logins"], login))
+	lBytes, err := r.GetKey(fmt.Sprintf(keys["logins"], login, service))
 	if err != nil {
 		return u, err
 	}
@@ -87,6 +89,11 @@ func (r Redis) UserGetData(login string) (storage.User, error) {
 
 	return u, nil
 
+}
+
+func (r Redis) UserUpdateActivity(uid int) error {
+
+	return nil
 }
 
 func (r *Redis) hashAndSaltPassword(pwd []byte) (string, error) {
