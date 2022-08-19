@@ -8,12 +8,11 @@ type ApiAnswer struct {
 }
 
 type JWTClaims struct {
-	Login     string `json:"login"`
-	Email     string `json:"email"`
-	Name      string `json:"name"`
-	LastName  string `json:"last_name"`
-	UsersPerm string `json:"users_permission"`
-	ServiceID int    `json:"service_id"`
+	ID       int    `json:"user_id"`
+	Login    string `json:"login"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	LastName string `json:"last_name"`
 	jwt.RegisteredClaims
 }
 
@@ -44,4 +43,7 @@ var (
 
 	ErrorUnauthed     = "unathorized"
 	ErrorUnauthedCode = 401
+
+	ErrorForbidden     = "forbidden"
+	ErrorForbiddenCode = 403
 )

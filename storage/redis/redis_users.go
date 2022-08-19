@@ -2,9 +2,11 @@ package redis
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/go-redis/redis"
 	"github.com/lazybark/go-helpers/cli/clf"
 	"github.com/lazybark/go-jwt/storage"
 	"golang.org/x/crypto/bcrypt"
@@ -19,11 +21,12 @@ func (r *Redis) GenerateUserId() int {
 
 func (r Redis) UserAdd(u storage.User) (int, error) {
 	//Check if such login exists
-	exists, err := r.CheckExistense(fmt.Sprintf(keys["logins"], u.Login, int(u.ServiceId)))
+	set, err := r.GetSet(fmt.Sprintf(keys["logins"], u.Login, int(u.ServiceId)))
 	if err != nil {
+		fmt.Println(err)
 		return 0, storage.ErrInternal
 	}
-	if exists {
+	if _, ok := set["user_id"]; ok {
 		return 0, storage.ErrEntityExists
 	}
 	//Generate new ID
@@ -31,9 +34,9 @@ func (r Redis) UserAdd(u storage.User) (int, error) {
 
 	//Add user data to user data list
 	u.ID = id
-	u.CreatedAt = time.Now()
-	u.UpdatedAt = time.Now()
-	u.LastActivity = time.Now()
+	u.CreatedAt = fmt.Sprint(time.Now().Unix())
+	u.UpdatedAt = fmt.Sprint(time.Now().Unix())
+	u.LastLogin = fmt.Sprint(time.Now().Unix())
 
 	pwdHashed, err := r.hashAndSaltPassword([]byte(u.PasswordHash))
 	if err != nil {
@@ -42,14 +45,20 @@ func (r Redis) UserAdd(u storage.User) (int, error) {
 
 	u.PasswordHash = pwdHashed
 
-	um, err := json.Marshal(u)
+	err = r.db.HMSet(fmt.Sprintf(keys["users"], id), u.TransfromToHashSet()).Err()
+	if err != nil {
+		fmt.Println(err)
+		return 0, storage.ErrInternal
+	}
+
+	/*um, err := json.Marshal(u)
 	if err != nil {
 		return 0, storage.ErrInternal
 	}
 	err = r.db.Set(fmt.Sprintf(keys["users"], id), um, 0).Err()
 	if err != nil {
 		return 0, storage.ErrInternal
-	}
+	}*/
 	//Add user login to login list
 	err = r.db.Set(fmt.Sprintf(keys["logins"], u.Login, int(u.ServiceId)), id, 0).Err()
 	if err != nil {
@@ -79,21 +88,39 @@ func (r Redis) UserGetData(login string, service int) (storage.User, error) {
 		return u, storage.ErrInternal
 	}
 
-	uBytes, err := r.GetKey(fmt.Sprintf(keys["users"], uid))
+	userMap, err := r.GetSet(fmt.Sprintf(keys["users"], uid))
+	if err != nil {
+		return u, err
+	}
+	/*uBytes, err := r.GetKey(fmt.Sprintf(keys["users"], uid))
 	if err != nil {
 		return u, err
 	}
 	if err := json.Unmarshal(uBytes, &u); err != nil {
 		return u, err
+	}*/
+	err = u.TransfromFromMap(userMap)
+	if err != nil {
+		return u, err
 	}
+
+	fmt.Println(userMap)
 
 	return u, nil
 
 }
 
 func (r Redis) UserUpdateActivity(uid int) error {
-
+	r.db.HSet(fmt.Sprintf(keys["users"], uid), "last_login", time.Now().Unix())
 	return nil
+}
+
+func (r Redis) UserGetParam(uid string, param string) (string, error) {
+	res, err := r.db.HGet(fmt.Sprintf(keys["users"], uid), param).Result()
+	if errors.Is(err, redis.Nil) || res == "" {
+		return "", storage.ErrEntityNotExist
+	}
+	return res, err
 }
 
 func (r *Redis) hashAndSaltPassword(pwd []byte) (string, error) {

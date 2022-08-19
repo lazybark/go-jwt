@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,9 +14,10 @@ import (
 
 func (a *Api) GenerateHMACToken(u storage.User) (string, error) {
 	claims := &JWTClaims{
-		Login:     u.Login,
-		ServiceID: int(u.ServiceId),
-		Name:      u.Name,
+		ID:       u.ID,
+		Login:    u.Login,
+		Name:     u.Name,
+		LastName: u.LastName,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    storage.Unversal.String(),
 			Subject:   u.ServiceId.String(),
@@ -81,6 +81,13 @@ func (a *Api) ResponseUserLogin(req *http.Request, w http.ResponseWriter) {
 		return
 	}
 
+	err = a.db.UserUpdateActivity(userData.ID)
+	if err != nil {
+		fmt.Println(clf.Red(err))
+		w.Write([]byte(fmt.Sprintf(ApiError, ErrorInternalCode, ErrorInternal)))
+		return
+	}
+
 	w.Write([]byte(token))
 
 }
@@ -92,9 +99,23 @@ func (a *Api) ComparePasswords(hashedPwd string, plainPwd string) (bool, error) 
 	plainPwdBytes := []byte(plainPwd)
 	err := bcrypt.CompareHashAndPassword(byteHash, plainPwdBytes)
 	if err != nil {
-		log.Println(err)
 		return false, err
 	}
 
 	return true, nil
+}
+
+func (a *Api) CheckUsersControlPermission(uid string, perm storage.PermissionUsers) (bool, error) {
+	str, err := a.db.UserGetParam(uid, "permission_users")
+	if err != nil {
+		return false, err
+	}
+	if str == "" {
+		return false, err
+	}
+	p, err := strconv.Atoi(str)
+	if err != nil {
+		return false, err
+	}
+	return perm.Check(storage.PermissionUsers(p)), nil
 }

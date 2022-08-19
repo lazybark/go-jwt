@@ -48,7 +48,7 @@ func (r Redis) Init() error {
 	return err
 }
 
-func (r *Redis) CheckExistense(key string) (bool, error) {
+func (r *Redis) CheckKeyExistense(key string) (bool, error) {
 	//If error is redis.Nil - no such entity
 	//Any other error means actual error
 	//No error means entity exists
@@ -72,6 +72,17 @@ func (r *Redis) GetKey(key string) ([]byte, error) {
 	}
 	if len(bytes) == 0 {
 		return nil, storage.ErrEntityNotExist
+	}
+	return bytes, nil
+}
+
+func (r *Redis) GetSet(key string) (map[string]string, error) {
+	bytes, err := r.db.HGetAll(key).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, storage.ErrEntityNotExist
+		}
+		return nil, err
 	}
 	return bytes, nil
 }

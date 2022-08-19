@@ -7,4 +7,5 @@ type Storage interface {
 	UserAdd(User) (int, error)
 	UserGetData(string, int) (User, error)
 	UserUpdateActivity(int) error
+	UserGetParam(string, string) (string, error)
 }

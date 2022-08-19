@@ -48,11 +48,19 @@ func (a *Api) ResponseUserAdd(req *http.Request, w http.ResponseWriter) {
 		return
 	}
 
+	//Now check perms
+	ok, err := a.CheckUsersControlPermission(fmt.Sprint(claims.ID), storage.UsersCreate)
+	if err != nil || !ok {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(fmt.Sprintf(ApiError, ErrorForbiddenCode, ErrorForbidden)))
+		return
+	}
+
 	//Check if user data fits our requirements
 	login := req.PostForm.Get("login")
 	pwd := req.PostForm.Get("pwd")
 	name := req.PostForm.Get("name")
-	secName := req.PostForm.Get("sec_name")
+	lastName := req.PostForm.Get("last_name")
 	email := req.PostForm.Get("email")
 	permUsers := req.PostForm.Get("perm_users")
 	service := req.PostForm.Get("service_id")
@@ -86,10 +94,10 @@ func (a *Api) ResponseUserAdd(req *http.Request, w http.ResponseWriter) {
 		Login:           login,
 		PasswordHash:    pwd,
 		Name:            name,
-		SecName:         secName,
+		LastName:        lastName,
 		Email:           email,
 		ServiceId:       storage.Service(serviceId),
-		PermissionUsers: storage.Permission(permUsersId),
+		PermissionUsers: storage.PermissionUsers(permUsersId),
 	}
 
 	uid, err := a.db.UserAdd(newUser)

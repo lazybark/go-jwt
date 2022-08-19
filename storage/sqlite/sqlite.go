@@ -34,6 +34,11 @@ func (s SQLite) UserGetData(login string, service int) (storage.User, error) {
 func (s SQLite) UserUpdateActivity(uid int) error {
 	return nil
 }
+
+func (s SQLite) UserGetParam(uid string, param string) (string, error) {
+	return "", nil
+}
+
 func (s SQLite) Flush() error {
 	return nil
 }
