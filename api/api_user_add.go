@@ -48,7 +48,7 @@ func (a *Api) ResponseUserAdd(req *http.Request, w http.ResponseWriter) {
 		return
 	}
 
-	//Now check perms
+	//Now check perms: user should have at leats storage.UsersCreate perm level
 	ok, err := a.CheckUsersControlPermission(fmt.Sprint(claims.ID), storage.UsersCreate)
 	if err != nil || !ok {
 		w.WriteHeader(http.StatusForbidden)

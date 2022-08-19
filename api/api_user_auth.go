@@ -117,5 +117,11 @@ func (a *Api) CheckUsersControlPermission(uid string, perm storage.PermissionUse
 	if err != nil {
 		return false, err
 	}
-	return perm.Check(storage.PermissionUsers(p)), nil
+	up := storage.PermissionUsers(p)
+	//Check if user has the right permisson at least
+	if !perm.Check(up) {
+		return false, nil
+	}
+	//And if the desired permission is not higher that user's
+	return perm <= up, nil
 }
