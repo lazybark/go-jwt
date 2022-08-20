@@ -51,14 +51,6 @@ func (r Redis) UserAdd(u storage.User) (int, error) {
 		return 0, storage.ErrInternal
 	}
 
-	/*um, err := json.Marshal(u)
-	if err != nil {
-		return 0, storage.ErrInternal
-	}
-	err = r.db.Set(fmt.Sprintf(keys["users"], id), um, 0).Err()
-	if err != nil {
-		return 0, storage.ErrInternal
-	}*/
 	//Add user login to login list
 	err = r.db.Set(fmt.Sprintf(keys["logins"], u.Login, int(u.ServiceId)), id, 0).Err()
 	if err != nil {
@@ -92,19 +84,10 @@ func (r Redis) UserGetData(login string, service int) (storage.User, error) {
 	if err != nil {
 		return u, err
 	}
-	/*uBytes, err := r.GetKey(fmt.Sprintf(keys["users"], uid))
-	if err != nil {
-		return u, err
-	}
-	if err := json.Unmarshal(uBytes, &u); err != nil {
-		return u, err
-	}*/
 	err = u.TransfromFromMap(userMap)
 	if err != nil {
 		return u, err
 	}
-
-	fmt.Println(userMap)
 
 	return u, nil
 
