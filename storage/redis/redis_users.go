@@ -21,12 +21,12 @@ func (r *Redis) GenerateUserId() int {
 
 func (r Redis) UserAdd(u storage.User) (int, error) {
 	//Check if such login exists
-	set, err := r.GetSet(fmt.Sprintf(keys["logins"], u.Login, int(u.ServiceId)))
+	exists, err := r.CheckKeyExistense(fmt.Sprintf(keys["logins"], u.Login, int(u.ServiceId)))
 	if err != nil {
 		fmt.Println(err)
 		return 0, storage.ErrInternal
 	}
-	if _, ok := set["user_id"]; ok {
+	if exists {
 		return 0, storage.ErrEntityExists
 	}
 	//Generate new ID
