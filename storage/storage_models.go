@@ -29,6 +29,11 @@ type User struct {
 	//PermissionUsers sets level of permissions to control users
 	//in the auth system
 	PermissionUsers PermissionUsers `json:"permission_users"`
+
+	//BytePayload stores any data that client system may want to
+	//store in the ACL system. It can be info relevant to
+	//client system needs: perms, roles, etc.
+	BytePayload []byte `json:"byte_payload"`
 }
 
 func (u User) TransfromToHashSet() map[string]interface{} {
@@ -44,6 +49,7 @@ func (u User) TransfromToHashSet() map[string]interface{} {
 	fields["updated_at"] = u.UpdatedAt
 	fields["last_login"] = u.LastLogin
 	fields["permission_users"] = int(u.PermissionUsers)
+	fields["byte_payload"] = u.BytePayload
 
 	return fields
 }
@@ -80,6 +86,7 @@ func (u *User) TransfromFromMap(fields map[string]string) error {
 	u.Name = fields["name"]
 	u.LastName = fields["last_name"]
 	u.Email = fields["email"]
+	u.BytePayload = []byte(fields["byte_payload"])
 
 	return nil
 }

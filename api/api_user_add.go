@@ -64,6 +64,7 @@ func (a *Api) ResponseUserAdd(req *http.Request, w http.ResponseWriter) {
 	email := req.PostForm.Get("email")
 	permUsers := req.PostForm.Get("perm_users")
 	service := req.PostForm.Get("service_id")
+	bytePayload := req.PostForm.Get("byte_payload")
 	if login == "" || pwd == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf(ApiError, ErrorBadFormCode, ErrorBadForm)))
@@ -98,6 +99,7 @@ func (a *Api) ResponseUserAdd(req *http.Request, w http.ResponseWriter) {
 		Email:           email,
 		ServiceId:       storage.Service(serviceId),
 		PermissionUsers: storage.PermissionUsers(permUsersId),
+		BytePayload:     []byte(bytePayload),
 	}
 
 	uid, err := a.db.UserAdd(newUser)
