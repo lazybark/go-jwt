@@ -14,10 +14,11 @@ import (
 
 func (a *Api) GenerateHMACToken(u storage.User) (string, error) {
 	claims := &JWTClaims{
-		ID:       u.ID,
-		Login:    u.Login,
-		Name:     u.Name,
-		LastName: u.LastName,
+		ID:          u.ID,
+		Login:       u.Login,
+		Name:        u.Name,
+		LastName:    u.LastName,
+		BytePayload: string(u.BytePayload),
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    storage.Unversal.String(),
 			Subject:   u.ServiceId.String(),

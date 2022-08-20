@@ -8,11 +8,12 @@ type ApiAnswer struct {
 }
 
 type JWTClaims struct {
-	ID       int    `json:"user_id"`
-	Login    string `json:"login"`
-	Email    string `json:"email"`
-	Name     string `json:"name"`
-	LastName string `json:"last_name"`
+	ID          int    `json:"user_id"`
+	Login       string `json:"login"`
+	Email       string `json:"email"`
+	Name        string `json:"name"`
+	LastName    string `json:"last_name"`
+	BytePayload string `json:"byte_payload"`
 	jwt.RegisteredClaims
 }
 
