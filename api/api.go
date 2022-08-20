@@ -24,7 +24,7 @@ var ApiVer = semver.Ver{
 	Patch:         0,
 	ReleaseNote:   "RED-backend service api",
 	BuildMetadata: "",
-	Stable:        false,
+	Stable:        true,
 }
 
 func New(db storage.Storage, conf config.Config) *Api {
