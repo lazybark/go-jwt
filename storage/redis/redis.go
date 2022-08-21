@@ -22,7 +22,7 @@ var keys = map[string]string{
 	"last_uid": "last_uid",    //last user id issued
 }
 
-func NewRedisStorage(RedisHost string, RedisPassword string, RedisTLS bool, DB int) (storage.Storage, error) {
+func NewRedisStorage(RedisHost string, RedisPassword string, RedisTLS bool, DB int) (Redis, error) {
 	options := &redis.Options{Addr: RedisHost, Password: RedisPassword, DB: DB}
 	if RedisTLS {
 		options.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12}
@@ -30,7 +30,7 @@ func NewRedisStorage(RedisHost string, RedisPassword string, RedisTLS bool, DB i
 
 	db := redis.NewClient(options)
 	if err := db.Ping().Err(); err != nil {
-		return nil, err
+		return Redis{}, err
 	}
 
 	r := Redis{db: db, lastUID: new(int), mutexUID: &sync.Mutex{}}
@@ -38,12 +38,12 @@ func NewRedisStorage(RedisHost string, RedisPassword string, RedisTLS bool, DB i
 	//If we have any prev key stored in db - restore it
 	bts, err := r.GetKey(keys["last_uid"])
 	if err != nil && err != storage.ErrEntityNotExist {
-		return nil, err
+		return r, err
 	}
 	if len(bts) > 0 {
 		bk, err := strconv.Atoi(string(bts))
 		if err != nil {
-			return nil, err
+			return r, err
 		}
 		r.lastUID = &bk
 	}
