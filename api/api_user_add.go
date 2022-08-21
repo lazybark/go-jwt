@@ -48,14 +48,6 @@ func (a *Api) ResponseUserAdd(req *http.Request, w http.ResponseWriter) {
 		return
 	}
 
-	//Now check perms: user should have at leats storage.UsersCreate perm level
-	ok, err := a.CheckUsersControlPermission(fmt.Sprint(claims.ID), storage.UsersCreate)
-	if err != nil || !ok {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(fmt.Sprintf(ApiError, ErrorForbiddenCode, ErrorForbidden)))
-		return
-	}
-
 	//Check if user data fits our requirements
 	login := req.PostForm.Get("login")
 	pwd := req.PostForm.Get("pwd")
@@ -65,7 +57,7 @@ func (a *Api) ResponseUserAdd(req *http.Request, w http.ResponseWriter) {
 	permUsers := req.PostForm.Get("perm_users")
 	service := req.PostForm.Get("service_id")
 	bytePayload := req.PostForm.Get("byte_payload")
-	if login == "" || pwd == "" {
+	if login == "" || pwd == "" || service == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf(ApiError, ErrorBadFormCode, ErrorBadForm)))
 		return
@@ -81,14 +73,34 @@ func (a *Api) ResponseUserAdd(req *http.Request, w http.ResponseWriter) {
 		}
 	}
 
+	//Now check perms: user should have at least storage.UsersCreate perm level
+	ok, err := a.CheckUsersControlPermission(fmt.Sprint(claims.ID), storage.UsersCreate, storage.PermissionUsers(permUsersId))
+	if err != nil || !ok {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(fmt.Sprintf(ApiError, ErrorForbiddenCode, ErrorForbidden)))
+		return
+	}
+
 	serviceId := 0
-	if service != "" {
-		serviceId, err = strconv.Atoi(service)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(fmt.Sprintf(ApiError, ErrorBadFormCode, ErrorBadForm)))
-			return
-		}
+	serviceId, err = strconv.Atoi(service)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf(ApiError, ErrorBadFormCode, ErrorBadForm)))
+		return
+	}
+	//Service id must be > 0
+	if serviceId == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf(ApiError, ErrorBadFormCode, ErrorBadForm)))
+		return
+	}
+
+	//Check that the user can control desired service
+	ok, err = a.CheckUsersControlService(fmt.Sprint(claims.ID), serviceId)
+	if err != nil || !ok {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(fmt.Sprintf(ApiError, ErrorForbiddenCode, ErrorForbidden)))
+		return
 	}
 
 	newUser := storage.User{
