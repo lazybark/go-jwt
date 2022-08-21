@@ -95,12 +95,20 @@ type Service int
 
 const (
 	//Unversal is a user that can perform ops on any service
-	Unversal Service = iota + 1
-	RedBackend
+	services_start Service = iota
+
+	ServiceUnversal
+	ServiceTesting
+	ServiceRedBackend
+
+	services_end
 )
 
 func (s Service) String() string {
-	return [...]string{"unversal", "red_backend_auth"}[s]
+	if s > services_end || s < services_start {
+		return "unknown"
+	}
+	return [...]string{"", "unversal", "lazybark_test", "red_backend_auth", ""}[s]
 }
 
 // PermissionUsers divides user access level to control other users.
@@ -121,7 +129,7 @@ func (p PermissionUsers) Check(cp PermissionUsers) bool {
 
 var (
 	UserSystem = User{
-		ServiceId:       Unversal,
+		ServiceId:       ServiceUnversal,
 		Login:           "SYSTEM_USER",
 		PasswordHash:    "retina-misc1-monstrous-23",
 		Name:            "SYSTEM_USER",
