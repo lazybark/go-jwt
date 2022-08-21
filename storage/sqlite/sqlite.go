@@ -1,5 +1,6 @@
 package sqlite
 
+/*
 import (
 	"log"
 	"os"
@@ -46,3 +47,4 @@ func (s SQLite) Flush() error {
 func (s SQLite) Init() error {
 	return nil
 }
+*/
