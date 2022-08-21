@@ -24,6 +24,7 @@ func main() {
 	}
 
 	server := api.New(rdb, conf)
+
 	if conf.FlushDB {
 		err = server.StorageFlush()
 		if err != nil {
