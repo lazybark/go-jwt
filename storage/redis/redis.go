@@ -3,6 +3,7 @@ package redis
 import (
 	"crypto/tls"
 	"errors"
+	"strconv"
 	"sync"
 
 	"github.com/go-redis/redis"
@@ -16,8 +17,9 @@ type Redis struct {
 }
 
 var keys = map[string]string{
-	"logins": "login-%s-%v", //user-login-serviceID
-	"users":  "user-%v",     //user-id
+	"logins":   "login-%s-%v", //user-login-serviceID
+	"users":    "user-%v",     //user-id
+	"last_uid": "last_uid",    //last user id issued
 }
 
 func NewRedisStorage(RedisHost string, RedisPassword string, RedisTLS bool, DB int) (storage.Storage, error) {
@@ -31,20 +33,34 @@ func NewRedisStorage(RedisHost string, RedisPassword string, RedisTLS bool, DB i
 		return nil, err
 	}
 
-	return Redis{db: db, lastUID: new(int), mutexUID: &sync.Mutex{}}, nil
+	r := Redis{db: db, lastUID: new(int), mutexUID: &sync.Mutex{}}
+
+	//If we have any prev key stored in db - restore it
+	bts, err := r.GetKey(keys["last_uid"])
+	if err != nil && err != storage.ErrEntityNotExist {
+		return nil, err
+	}
+	if len(bts) > 0 {
+		bk, err := strconv.Atoi(string(bts))
+		if err != nil {
+			return nil, err
+		}
+		r.lastUID = &bk
+	}
+
+	return r, nil
 }
 
 func (r Redis) Flush() error {
+	*r.lastUID = 0
 	return r.db.FlushDB().Err()
 }
 
 func (r Redis) Init() error {
-
 	_, err := r.UserAdd(storage.UserSystem)
 	if err != nil {
 		return err
 	}
-
 	return err
 }
 

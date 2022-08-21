@@ -20,7 +20,7 @@ func (a *Api) GenerateHMACToken(u storage.User) (string, error) {
 		LastName:    u.LastName,
 		BytePayload: string(u.BytePayload),
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    storage.Unversal.String(),
+			Issuer:    storage.ServiceUnversal.String(),
 			Subject:   u.ServiceId.String(),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
@@ -36,9 +36,9 @@ func (a *Api) GenerateHMACToken(u storage.User) (string, error) {
 // UserAdd call to storage UserAdd method, checks results and writes []byte answer to client
 func (a *Api) ResponseUserLogin(req *http.Request, w http.ResponseWriter) {
 	//Check if user data fits our requirements
-	login := req.Form.Get("login")
-	pwd := req.Form.Get("pwd")
-	srv := req.Form.Get("service_id")
+	login := req.PostForm.Get("login")
+	pwd := req.PostForm.Get("pwd")
+	srv := req.PostForm.Get("service_id")
 	if login == "" || pwd == "" || srv == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf(ApiError, ErrorBadFormCode, ErrorBadForm)))
@@ -106,7 +106,7 @@ func (a *Api) ComparePasswords(hashedPwd string, plainPwd string) (bool, error) 
 	return true, nil
 }
 
-func (a *Api) CheckUsersControlPermission(uid string, perm storage.PermissionUsers) (bool, error) {
+func (a *Api) CheckUsersControlPermission(uid string, perm storage.PermissionUsers, targPerm storage.PermissionUsers) (bool, error) {
 	str, err := a.db.UserGetParam(uid, "permission_users")
 	if err != nil {
 		return false, err
@@ -124,5 +124,23 @@ func (a *Api) CheckUsersControlPermission(uid string, perm storage.PermissionUse
 		return false, nil
 	}
 	//And if the desired permission is not higher that user's
-	return perm <= up, nil
+	return targPerm.Check(up), nil
+}
+
+func (a *Api) CheckUsersControlService(uid string, srv int) (bool, error) {
+	str, err := a.db.UserGetParam(uid, "service_id")
+	if err != nil {
+		return false, err
+	}
+	if str == "" {
+		return false, err
+	}
+	p, err := strconv.Atoi(str)
+	if err != nil {
+		return false, err
+	}
+
+	//User can control only its service users (except 1, 1 is the universal service controller)
+	fmt.Println(p == 1 || p == srv)
+	return p == 1 || p == srv, nil
 }

@@ -12,11 +12,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (r *Redis) GenerateUserId() int {
+func (r *Redis) GenerateUserId() (int, error) {
 	r.mutexUID.Lock()
 	*r.lastUID++
+	err := r.db.Set(keys["last_uid"], *r.lastUID, 0).Err()
+	if err != nil {
+		fmt.Println(clf.Red("ERROR SETTING last user id "))
+	}
 	r.mutexUID.Unlock()
-	return *r.lastUID
+	return *r.lastUID, nil
 }
 
 func (r Redis) UserAdd(u storage.User) (int, error) {
@@ -30,7 +34,11 @@ func (r Redis) UserAdd(u storage.User) (int, error) {
 		return 0, storage.ErrEntityExists
 	}
 	//Generate new ID
-	id := r.GenerateUserId()
+	id, err := r.GenerateUserId()
+	if err != nil {
+		fmt.Println(err)
+		return 0, storage.ErrInternal
+	}
 
 	//Add user data to user data list
 	u.ID = id
