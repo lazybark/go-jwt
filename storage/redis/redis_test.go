@@ -3,13 +3,20 @@ package redis
 import (
 	"testing"
 
+	"github.com/lazybark/lazyevent/v2/events"
+	"github.com/lazybark/lazyevent/v2/logger"
+	"github.com/lazybark/lazyevent/v2/lproc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRestoringIdFromPrevSession(t *testing.T) {
+	cli := logger.NewCLI(events.Any)
+	//New LogProcessor to rule them all
+	p := lproc.New("", make(chan error), false, cli)
+
 	id := 15
-	rdb2, err := NewRedisStorage("localhost:6379", "", false, 5)
+	rdb2, err := NewRedisStorage("localhost:6379", "", false, 5, p)
 	require.NoError(t, err)
 	err = rdb2.Flush()
 	require.NoError(t, err)
@@ -23,7 +30,7 @@ func TestRestoringIdFromPrevSession(t *testing.T) {
 	require.NoError(t, err)
 
 	//New rdb should see last_uid record and use it as own during Init()
-	rdb, err := NewRedisStorage("localhost:6379", "", false, 5)
+	rdb, err := NewRedisStorage("localhost:6379", "", false, 5, nil)
 	require.NoError(t, err)
 
 	err = rdb.Init() //Init adds 1 user and makes last_uid+1

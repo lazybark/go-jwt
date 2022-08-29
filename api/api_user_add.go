@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/lazybark/go-helpers/cli/clf"
 	"github.com/lazybark/go-jwt/storage"
 )
 
@@ -21,7 +20,7 @@ func (a *Api) ResponseUserAdd(req *http.Request, w http.ResponseWriter) {
 			w.Write([]byte(fmt.Sprintf(ApiError, ErrorUnauthedCode, ErrorUnauthed)))
 			return
 		}
-		fmt.Println(clf.Red(err))
+		a.logger.LogErrOnly(err)
 		w.Write([]byte(fmt.Sprintf(ApiError, ErrorBadRequestCode, ErrorBadRequest)))
 		return
 	}
@@ -37,7 +36,7 @@ func (a *Api) ResponseUserAdd(req *http.Request, w http.ResponseWriter) {
 			w.Write([]byte(fmt.Sprintf(ApiError, ErrorUnauthedCode, ErrorUnauthed)))
 			return
 		}
-		fmt.Println(clf.Red(err))
+		a.logger.LogErrOnly(err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf(ApiError, ErrorBadRequestCode, ErrorBadRequest)))
 		return

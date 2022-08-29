@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/lazybark/go-helpers/cli/clf"
 	"github.com/lazybark/go-jwt/storage"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -58,7 +57,7 @@ func (a *Api) ResponseUserLogin(req *http.Request, w http.ResponseWriter) {
 			w.Write([]byte(fmt.Sprintf(ApiError, ErrorNotExistCode, ErrorNotExist)))
 			return
 		}
-		fmt.Println(clf.Red(err))
+		a.logger.LogErrOnly(err)
 		w.Write([]byte(fmt.Sprintf(ApiError, ErrorInternalCode, ErrorInternal)))
 		return
 	}
@@ -70,21 +69,21 @@ func (a *Api) ResponseUserLogin(req *http.Request, w http.ResponseWriter) {
 		return
 	}
 	if err != nil {
-		fmt.Println(clf.Red(err))
+		a.logger.LogErrOnly(err)
 		w.Write([]byte(fmt.Sprintf(ApiError, ErrorInternalCode, ErrorInternal)))
 		return
 	}
 
 	token, err := a.GenerateHMACToken(userData)
 	if err != nil {
-		fmt.Println(clf.Red(err))
+		a.logger.LogErrOnly(err)
 		w.Write([]byte(fmt.Sprintf(ApiError, ErrorInternalCode, ErrorInternal)))
 		return
 	}
 
 	err = a.db.UserUpdateActivity(userData.ID)
 	if err != nil {
-		fmt.Println(clf.Red(err))
+		a.logger.LogErrOnly(err)
 		w.Write([]byte(fmt.Sprintf(ApiError, ErrorInternalCode, ErrorInternal)))
 		return
 	}
@@ -141,6 +140,5 @@ func (a *Api) CheckUsersControlService(uid string, srv int) (bool, error) {
 	}
 
 	//User can control only its service users (except 1, 1 is the universal service controller)
-	fmt.Println(p == 1 || p == srv)
 	return p == 1 || p == srv, nil
 }
