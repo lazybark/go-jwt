@@ -8,6 +8,9 @@ import (
 	"github.com/lazybark/go-helpers/mock"
 	"github.com/lazybark/go-jwt/config"
 	"github.com/lazybark/go-jwt/storage/redis"
+	"github.com/lazybark/lazyevent/v2/events"
+	"github.com/lazybark/lazyevent/v2/logger"
+	"github.com/lazybark/lazyevent/v2/lproc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,11 +19,14 @@ func TestUsersApi(t *testing.T) {
 		Host:   "localhost",
 		Secret: "sample_secret_this_is",
 	}
+	cli := logger.NewCLI(events.Any)
+	//New LogProcessor to rule them all
+	p := lproc.New("", make(chan error), false, cli)
 
-	rdb, err := redis.NewRedisStorage("localhost:6379", "", false, 5)
+	rdb, err := redis.NewRedisStorage("localhost:6379", "", false, 5, p)
 	require.NoError(t, err)
 
-	a := New(rdb, conf)
+	a := New(rdb, conf, p)
 	err = a.db.Flush()
 	require.NoError(t, err)
 	err = a.db.Init()

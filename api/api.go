@@ -6,17 +6,26 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/lazybark/go-helpers/cli/clf"
 	"github.com/lazybark/go-helpers/semver"
 	"github.com/lazybark/go-jwt/config"
 	"github.com/lazybark/go-jwt/storage"
+
+	"github.com/lazybark/lazyevent/v2/events"
+	"github.com/lazybark/lazyevent/v2/lproc"
 )
 
 type Api struct {
-	ver  semver.Ver
-	db   storage.Storage
-	conf config.Config
+	ver    semver.Ver
+	db     storage.Storage
+	conf   *config.Config
+	logger *lproc.LogProcessor
 }
+
+/*
+type ILogger interface {
+	Log(e events.Event)
+	FatalInCaseErr(any)
+}*/
 
 var ApiVer = semver.Ver{
 	Major:         1,
@@ -27,8 +36,9 @@ var ApiVer = semver.Ver{
 	Stable:        true,
 }
 
-func New(db storage.Storage, conf config.Config) *Api {
-	return &Api{ver: ApiVer, db: db, conf: conf}
+func New(db storage.Storage, conf config.Config, l *lproc.LogProcessor) *Api {
+
+	return &Api{ver: ApiVer, db: db, conf: &conf, logger: l}
 }
 
 func (a *Api) Start() {
@@ -51,7 +61,7 @@ func (a *Api) Start() {
 		})
 	})
 
-	fmt.Println(clf.Green(fmt.Sprintf("Listening on %s", a.conf.Host)))
+	a.logger.Log(events.Info(fmt.Sprintf("Listening on %s", a.conf.Host)).Green())
 	http.ListenAndServe(a.conf.Host, r)
 }
 

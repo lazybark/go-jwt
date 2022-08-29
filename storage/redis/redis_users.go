@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"github.com/lazybark/go-helpers/cli/clf"
 	"github.com/lazybark/go-jwt/storage"
+	"github.com/lazybark/lazyevent/v2/events"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -17,7 +17,7 @@ func (r *Redis) GenerateUserId() (int, error) {
 	*r.lastUID++
 	err := r.db.Set(keys["last_uid"], *r.lastUID, 0).Err()
 	if err != nil {
-		fmt.Println(clf.Red("ERROR SETTING last user id "))
+		r.logger.LogErrOnly(events.Error(fmt.Sprint("ERROR SETTING last user id :", err)).Red())
 	}
 	r.mutexUID.Unlock()
 	return *r.lastUID, nil
@@ -27,7 +27,7 @@ func (r Redis) UserAdd(u storage.User) (int, error) {
 	//Check if such login exists
 	exists, err := r.CheckKeyExistense(fmt.Sprintf(keys["logins"], u.Login, int(u.ServiceId)))
 	if err != nil {
-		fmt.Println(err)
+		r.logger.LogErrOnly(err)
 		return 0, storage.ErrInternal
 	}
 	if exists {
@@ -36,7 +36,7 @@ func (r Redis) UserAdd(u storage.User) (int, error) {
 	//Generate new ID
 	id, err := r.GenerateUserId()
 	if err != nil {
-		fmt.Println(err)
+		r.logger.LogErrOnly(err)
 		return 0, storage.ErrInternal
 	}
 
@@ -55,18 +55,18 @@ func (r Redis) UserAdd(u storage.User) (int, error) {
 
 	err = r.db.HMSet(fmt.Sprintf(keys["users"], id), u.TransfromToHashSet()).Err()
 	if err != nil {
-		fmt.Println(err)
+		r.logger.LogErrOnly(err)
 		return 0, storage.ErrInternal
 	}
 
 	//Add user login to login list
 	err = r.db.Set(fmt.Sprintf(keys["logins"], u.Login, int(u.ServiceId)), id, 0).Err()
 	if err != nil {
-		fmt.Println(clf.Red("ERROR SETTING USER LOGIN RECORD. MAIN RECORD WILL BE DELETED for ", id))
+		r.logger.LogErrOnly(events.Error(fmt.Sprint("ERROR SETTING USER LOGIN RECORD. MAIN RECORD WILL BE DELETED for :", id)).Red())
 		//Remove user data from data list
 		err = r.db.Del(fmt.Sprintf(keys["users"], id)).Err()
 		if err != nil {
-			fmt.Println(clf.Red("ERROR DELETING BAD USER RECORD for", id))
+			r.logger.LogErrOnly(events.Error(fmt.Sprint("ERROR DELETING BAD USER RECORD for :", id)).Red())
 		}
 		return 0, storage.ErrInternal
 	}
@@ -84,7 +84,7 @@ func (r Redis) UserGetData(login string, service int) (storage.User, error) {
 	}
 	//Result should be user id > 0
 	if err := json.Unmarshal(lBytes, &uid); err != nil || uid == 0 {
-		fmt.Println(clf.Red(err))
+		r.logger.LogErrOnly(err)
 		return u, storage.ErrInternal
 	}
 

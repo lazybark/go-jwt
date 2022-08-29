@@ -8,12 +8,14 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/lazybark/go-jwt/storage"
+	"github.com/lazybark/lazyevent/v2/lproc"
 )
 
 type Redis struct {
 	db       *redis.Client
 	lastUID  *int
 	mutexUID *sync.Mutex
+	logger   *lproc.LogProcessor
 }
 
 var keys = map[string]string{
@@ -22,7 +24,7 @@ var keys = map[string]string{
 	"last_uid": "last_uid",    //last user id issued
 }
 
-func NewRedisStorage(RedisHost string, RedisPassword string, RedisTLS bool, DB int) (Redis, error) {
+func NewRedisStorage(RedisHost string, RedisPassword string, RedisTLS bool, DB int, l *lproc.LogProcessor) (Redis, error) {
 	options := &redis.Options{Addr: RedisHost, Password: RedisPassword, DB: DB}
 	if RedisTLS {
 		options.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12}
@@ -33,7 +35,7 @@ func NewRedisStorage(RedisHost string, RedisPassword string, RedisTLS bool, DB i
 		return Redis{}, err
 	}
 
-	r := Redis{db: db, lastUID: new(int), mutexUID: &sync.Mutex{}}
+	r := Redis{db: db, lastUID: new(int), mutexUID: &sync.Mutex{}, logger: l}
 
 	//If we have any prev key stored in db - restore it
 	bts, err := r.GetKey(keys["last_uid"])

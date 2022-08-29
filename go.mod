@@ -7,19 +7,16 @@ require (
 	github.com/go-chi/chi v1.5.4
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang-jwt/jwt/v4 v4.4.2
-	github.com/lazybark/go-helpers v1.2.1-0.20220821101507-0f56f64d5de6
+	github.com/lazybark/go-helpers v1.3.1-0.20220822162539-61cc1d00e93b
+	github.com/lazybark/lazyevent v0.0.0-20220825135449-c259b5982764
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	gorm.io/driver/sqlite v1.3.6
-	gorm.io/gorm v1.23.8
 )
 
 require (
 	github.com/alexflint/go-scalar v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/mattn/go-sqlite3 v1.14.12 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.20.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
