@@ -7,7 +7,7 @@ type Config struct {
 	DBName  string `arg:"--db, env:DBNAME" help:"Database name" default:"auth_data.db"`
 	FlushDB bool   `arg:"--flush, env:FLUSHDB" help:"Flush database" default:"false"`
 	InitDB  bool   `arg:"--init, env:INITDB" help:"Init database" default:"false"`
-	Secret  string `arg:"--init, env:AUTH_SECRET" help:"Secret to auth JWT" default:"sample_secret_this_is"`
+	Secret  string `arg:"--secret, env:AUTH_SECRET" help:"Secret to auth JWT" default:"sample_secret_this_is"`
 }
 
 func GetConfig() (Config, error) {
